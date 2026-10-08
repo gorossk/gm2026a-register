@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ゲムマ2026秋 レジ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+/* Layout: booth till — products on the left, payment + big change readout on the right; stacks on phones */
+:root {
+  --bg: #f3f1ee;
+  --surface: #ffffff;
+  --ink: #1d1a1f;
+  --muted: #6e6873;
+  --line: #ddd8d4;
+  --wax: #2a2230;          /* black candle */
+  --flame: #d9822b;        /* accent */
+  --flame-soft: #f7e3cc;
+  --paper: #e9edf3;        /* paragraph novel */
+  --good: #1f7a4d;
+  --bad: #c0392b;
+  --font-display: "Shippori Mincho B1", "Hiragino Mincho ProN", serif;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", system-ui, sans-serif;
+  --font-num: "Barlow Condensed", "Zen Kaku Gothic New", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17141a; --surface: #221e26; --ink: #f1ece6; --muted: #a39ba8; --line: #3a3340;
+    --wax: #0e0b10; --flame: #f0a24f; --flame-soft: #3b2a1a; --paper: #2b3038;
+    --good: #4cc38a; --bad: #ff6b5c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17141a; --surface: #221e26; --ink: #f1ece6; --muted: #a39ba8; --line: #3a3340;
+  --wax: #0e0b10; --flame: #f0a24f; --flame-soft: #3b2a1a; --paper: #2b3038;
+  --good: #4cc38a; --bad: #ff6b5c; color-scheme: dark;
+}
+html, body { min-height: 100%; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px;
+  margin: 0; padding: 16px; box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: inherit; }
+button { font-family: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--flame); outline-offset: 2px; }
+
+.app { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px; }
+header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+h1 { font-family: var(--font-display); font-size: 22px; margin: 0; letter-spacing: .02em; }
+h1 small { font-family: var(--font-body); font-weight: 500; font-size: 13px; color: var(--muted); margin-left: 8px; }
+.label { font-size: 12px; letter-spacing: .12em; color: var(--muted); font-weight: 700; }
+
+.main { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 820px) { .main { grid-template-columns: 1fr; } }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 14px; min-width: 0; }
+
+/* products */
+.products { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.prod {
+  position: relative; text-align: left; border: 1px solid var(--line); border-radius: 12px;
+  background: var(--paper); padding: 14px 14px 12px; display: grid; gap: 6px; min-height: 104px;
+  transition: transform .08s ease;
+}
+.prod:active { transform: scale(.97); }
+.prod .name { font-weight: 700; font-size: 16px; line-height: 1.3; }
+.prod .vol { font-family: var(--font-display); font-size: 30px; line-height: 1; }
+.prod .price { font-family: var(--font-num); font-size: 20px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.prod.candle { grid-column: 1 / -1; background: var(--wax); color: #f6efe6; border-color: var(--wax); }
+.prod.candle .price { color: #cbbfb2; }
+.prod.candle .name { font-family: var(--font-display); font-size: 24px; }
+.prod.candle .name::before { content: ""; display: inline-block; width: 6px; height: 14px; margin-right: 10px; border-radius: 50% 50% 40% 40%; background: var(--flame); box-shadow: 0 0 10px var(--flame); vertical-align: 1px; }
+.badge {
+  position: absolute; top: 10px; right: 10px; min-width: 34px; height: 34px; padding: 0 8px;
+  border-radius: 17px; background: var(--flame); color: #1d1208; font-family: var(--font-num);
+  font-size: 22px; font-weight: 700; display: grid; place-items: center;
+}
+
+/* cart */
+.cart { display: grid; gap: 6px; }
+.cart-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.cart-row .n { font-weight: 500; min-width: 0; }
+.cart-row .sub { font-family: var(--font-num); font-size: 20px; font-variant-numeric: tabular-nums; min-width: 72px; text-align: right; }
+.cart-row .q { font-family: var(--font-num); font-size: 20px; min-width: 28px; text-align: center; }
+.step { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: 20px; line-height: 1; }
+.empty { color: var(--muted); padding: 10px 0; }
+
+.total { display: flex; justify-content: space-between; align-items: baseline; border-top: 2px solid var(--ink); padding-top: 10px; }
+.total .v { font-family: var(--font-num); font-size: 44px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* payment */
+.recv-wrap { display: flex; align-items: center; gap: 8px; border: 2px solid var(--line); border-radius: 12px; padding: 4px 14px; background: var(--bg); }
+.recv-wrap:focus-within { border-color: var(--flame); }
+.recv-wrap span { font-family: var(--font-num); font-size: 32px; color: var(--muted); }
+#received { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font-family: var(--font-num); font-size: 44px; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; outline: none; padding: 4px 0; }
+.quick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.quick button { height: 52px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-family: var(--font-num); font-size: 22px; font-weight: 600; }
+.quick button.alt { font-family: var(--font-body); font-size: 15px; font-weight: 700; }
+.quick button.exact { background: var(--flame-soft); border-color: var(--flame); }
+
+.change { border-radius: 14px; padding: 18px 16px 20px; background: var(--wax); color: #f6efe6; display: grid; gap: 4px; text-align: center; }
+.change .label { color: #cbbfb2; font-size: 14px; }
+.change .v { font-family: var(--font-num); font-weight: 700; font-size: clamp(72px, 16vw, 132px); line-height: .95; font-variant-numeric: tabular-nums; }
+.change .v .yen { font-size: .45em; margin-right: .08em; color: #cbbfb2; }
+.change .note { font-size: 15px; min-height: 1.4em; color: #cbbfb2; }
+.change.ok .v { color: #ffd59a; }
+.change.short { background: var(--bad); }
+.change.short .v, .change.short .note, .change.short .label { color: #fff; }
+
+.actions { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
+.actions button { height: 60px; border-radius: 12px; font-size: 17px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); }
+.actions .done { background: var(--good); border-color: var(--good); color: #fff; }
+.actions .done:disabled { opacity: .4; cursor: not-allowed; }
+
+/* tally */
+details.tally { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; }
+details.tally summary { cursor: pointer; font-weight: 700; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+details.tally summary .sum { font-family: var(--font-num); font-size: 20px; font-variant-numeric: tabular-nums; }
+.tally-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+.tally-grid div { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding: 4px 0; }
+.tally-grid b { font-family: var(--font-num); font-size: 18px; font-variant-numeric: tabular-nums; }
+.tally-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; color: var(--muted); font-size: 13px; }
+.tally-foot button { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+.tally-foot button.armed { background: var(--bad); color: #fff; border-color: var(--bad); }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-weight: 700; opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.show { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .prod, .toast { transition: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>ゲームマーケット2026秋 レジ<small>タップで商品追加</small></h1>
+  </header>
+
+  <div class="main">
+    <section class="panel" aria-label="商品と注文">
+      <div class="products" id="products"></div>
+      <div>
+        <div class="label">ご注文</div>
+        <div class="cart" id="cart"></div>
+      </div>
+      <div class="total"><span class="label">合計</span><span class="v" id="total">¥0</span></div>
+    </section>
+
+    <section class="panel" aria-label="お会計">
+      <div>
+        <label class="label" for="received">お預かり</label>
+        <div class="recv-wrap"><span>¥</span><input id="received" type="text" inputmode="numeric" autocomplete="off" placeholder="0"></div>
+      </div>
+      <div class="quick">
+        <button data-add="100">+100</button>
+        <button data-add="500">+500</button>
+        <button data-add="1000">+1,000</button>
+        <button data-add="5000">+5,000</button>
+        <button data-add="10000">+10,000</button>
+        <button data-set="10000">10,000</button>
+        <button class="alt exact" id="exact">ちょうど</button>
+        <button class="alt" id="clearRecv">クリア</button>
+      </div>
+      <div class="change" id="changeBox" aria-live="polite">
+        <div class="label">お釣り</div>
+        <div class="v" id="change"><span class="yen">¥</span>0</div>
+        <div class="note" id="note">商品を選んでください</div>
+      </div>
+      <div class="actions">
+        <button id="reset">取り消し</button>
+        <button class="done" id="done" disabled>会計完了 → 次のお客様</button>
+      </div>
+    </section>
+  </div>
+
+  <details class="tally" id="tally">
+    <summary><span>この端末の売上集計</span><span class="sum" id="tallySum">¥0 / 0件</span></summary>
+    <div class="tally-grid" id="tallyGrid"></div>
+    <div class="tally-foot">
+      <span>会計完了を押すたびに加算されます（このブラウザ内のみ保存）</span>
+      <button id="tallyReset">集計をリセット</button>
+    </div>
+  </details>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const PRODUCTS = [
+  { id: "candle", name: "ブラックキャンドル", price: 2500, cls: "candle" },
+  { id: "pn1", name: "パラグラフノベル", vol: "1", price: 900 },
+  { id: "pn2", name: "パラグラフノベル", vol: "2", price: 900 },
+  { id: "pn3", name: "パラグラフノベル", vol: "3", price: 900 },
+  { id: "pn4", name: "パラグラフノベル", vol: "4", price: 900 },
+];
+const TALLY_KEY = "gm2026a-register-tally";
+const yen = n => "¥" + n.toLocaleString("ja-JP");
+const $ = id => document.getElementById(id);
+
+let cart = {};      // id -> qty
+let received = 0;
+
+function total() { return PRODUCTS.reduce((s, p) => s + (cart[p.id] || 0) * p.price, 0); }
+function label(p) { return p.vol ? `${p.name} ${p.vol}` : p.name; }
+
+function renderProducts() {
+  $("products").innerHTML = PRODUCTS.map(p => `
+    <button class="prod ${p.cls || ""}" data-id="${p.id}" aria-label="${label(p)} を追加">
+      ${p.vol ? `<span class="name">${p.name}</span><span class="vol">${p.vol}</span>` : `<span class="name">${p.name}</span>`}
+      <span class="price">${yen(p.price)}</span>
+      ${cart[p.id] ? `<span class="badge">${cart[p.id]}</span>` : ""}
+    </button>`).join("");
+}
+
+function renderCart() {
+  const rows = PRODUCTS.filter(p => cart[p.id]);
+  $("cart").innerHTML = rows.length ? rows.map(p => `
+    <div class="cart-row">
+      <span class="n">${label(p)}</span>
+      <button class="step" data-dec="${p.id}" aria-label="${label(p)} を1つ減らす">−</button>
+      <span class="q">${cart[p.id]}</span>
+      <button class="step" data-inc="${p.id}" aria-label="${label(p)} を1つ増やす">+</button>
+      <span class="sub">${yen(cart[p.id] * p.price)}</span>
+    </div>`).join("") : `<div class="empty">まだ商品がありません</div>`;
+  $("total").textContent = yen(total());
+}
+
+function renderChange() {
+  const t = total(), box = $("changeBox"), diff = received - t;
+  box.classList.remove("ok", "short");
+  let v = 0, note = "";
+  if (t === 0) note = "商品を選んでください";
+  else if (received === 0) note = `合計 ${yen(t)}　お預かり金額を入力`;
+  else if (diff < 0) { box.classList.add("short"); v = -diff; note = `あと ${yen(-diff)} 不足しています`; }
+  else { box.classList.add("ok"); v = diff; note = diff === 0 ? "ちょうどお預かり" : `${yen(received)} − ${yen(t)}`; }
+  $("change").innerHTML = `<span class="yen">${diff < 0 && t && received ? "不足 ¥" : "¥"}</span>${v.toLocaleString("ja-JP")}`;
+  $("note").textContent = note;
+  $("done").disabled = !(t > 0 && received >= t);
+}
+
+function render() { renderProducts(); renderCart(); renderChange(); }
+
+function setReceived(n) {
+  received = Math.max(0, Math.min(n, 9999999));
+  $("received").value = received ? received.toLocaleString("ja-JP") : "";
+  renderChange();
+}
+
+$("products").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]"); if (!b) return;
+  cart[b.dataset.id] = (cart[b.dataset.id] || 0) + 1; render();
+});
+$("cart").addEventListener("click", e => {
+  const inc = e.target.closest("[data-inc]"), dec = e.target.closest("[data-dec]");
+  if (inc) cart[inc.dataset.inc]++;
+  if (dec) { const id = dec.dataset.dec; cart[id]--; if (cart[id] <= 0) delete cart[id]; }
+  if (inc || dec) render();
+});
+$("received").addEventListener("input", e => {
+  const digits = e.target.value.replace(/[^\d０-９]/g, "").replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  received = Math.min(Number(digits || 0), 9999999);
+  e.target.value = received ? received.toLocaleString("ja-JP") : "";
+  renderChange();
+});
+$("received").addEventListener("focus", e => e.target.select());
+document.querySelectorAll("[data-add]").forEach(b => b.addEventListener("click", () => setReceived(received + Number(b.dataset.add))));
+document.querySelectorAll("[data-set]").forEach(b => b.addEventListener("click", () => setReceived(Number(b.dataset.set))));
+$("exact").addEventListener("click", () => setReceived(total()));
+$("clearRecv").addEventListener("click", () => setReceived(0));
+
+function clearSale() { cart = {}; received = 0; $("received").value = ""; render(); }
+$("reset").addEventListener("click", clearSale);
+
+// tally (per-browser)
+function loadTally() { try { return JSON.parse(localStorage.getItem(TALLY_KEY)) || { sales: 0, count: 0, items: {} }; } catch { return { sales: 0, count: 0, items: {} }; } }
+function saveTally(t) { try { localStorage.setItem(TALLY_KEY, JSON.stringify(t)); } catch {} }
+function renderTally() {
+  const t = loadTally();
+  $("tallySum").textContent = `${yen(t.sales)} / ${t.count}件`;
+  $("tallyGrid").innerHTML = PRODUCTS.map(p => `<div><span>${label(p)}</span><b>${t.items[p.id] || 0}</b></div>`).join("");
+}
+$("done").addEventListener("click", () => {
+  const t = loadTally(), sum = total();
+  t.sales += sum; t.count += 1;
+  for (const id in cart) t.items[id] = (t.items[id] || 0) + cart[id];
+  saveTally(t); renderTally();
+  toast(`${yen(sum)} 会計完了`);
+  clearSale();
+});
+let armTimer;
+$("tallyReset").addEventListener("click", e => {
+  const b = e.currentTarget;
+  if (!b.classList.contains("armed")) {
+    b.classList.add("armed"); b.textContent = "もう一度押すとリセット";
+    clearTimeout(armTimer); armTimer = setTimeout(() => { b.classList.remove("armed"); b.textContent = "集計をリセット"; }, 3000);
+    return;
+  }
+  clearTimeout(armTimer); saveTally({ sales: 0, count: 0, items: {} }); renderTally();
+  b.classList.remove("armed"); b.textContent = "集計をリセット"; toast("集計をリセットしました");
+});
+
+let toastTimer;
+function toast(msg) { const el = $("toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 1600); }
+
+// keep the screen awake at the booth when allowed
+async function wake() { try { await navigator.wakeLock?.request("screen"); } catch {} }
+document.addEventListener("click", wake, { once: true });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") wake(); });
+
+render(); renderTally();
+</script>
+</body>
+</html>
